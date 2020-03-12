@@ -4,6 +4,7 @@ from typing import List
 
 from models.location import Location
 from db.locations import locations as location_db
+from core.security import get_current_active_user
 
 router = APIRouter()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/token")
@@ -14,7 +15,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/token")
     tags=["locations"],
     summary="Test summary",
     response_description="Test response description")
-async def locations(token: str = Depends(oauth2_scheme)):
+async def locations(token: str = Depends(get_current_active_user)):
     """
     Description from DocString
     """
