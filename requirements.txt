@@ -1,3 +1,7 @@
 fastapi
 uvicorn
 multipart
+passlib
+ariadne==0.9.0
+pyjwt
+
