@@ -5,6 +5,7 @@ main.py
 # from api.graphql.api import schema
 # import asyncio
 # from ariadne import SubscriptionType, make_executable_schema
+import uvicorn
 from ariadne.asgi import GraphQL
 
 # type_def = """
@@ -40,10 +41,16 @@ from fastapi import FastAPI
 from routers import locations, login
 from api.graphql.api import schema
 
+async def get_context_value(request):
+    return {
+        "request": request,
+    }
+
 app = FastAPI()
 
 app.include_router(login.router)
 app.include_router(locations.router)
-app.mount("/graphql", GraphQL(schema, debug=True))
+app.mount("/graphql", GraphQL(schema, context_value=get_context_value, debug=True))
 
-    
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8000)

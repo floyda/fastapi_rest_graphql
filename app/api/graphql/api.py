@@ -2,13 +2,32 @@ import asyncio
 from ariadne import SubscriptionType, make_executable_schema
 from ariadne.asgi import GraphQL
 
+from ariadne import SchemaDirectiveVisitor
+from graphql import default_field_resolver
+from core.security import get_current_user, oauth2_scheme
+
+
+class IsAuthenticated(SchemaDirectiveVisitor):
+    def visit_field_definition(self, field, object_type):
+        original_resolver = field.resolve
+        async def resolve_authentication(obj, info, **kwargs):
+            param = await oauth2_scheme(info.context['request'])
+            if await get_current_user(param):
+                return original_resolver(obj, info, **kwargs)
+            return None
+
+        field.resolve = resolve_authentication
+        return field
+
 type_def = """
-    type Query {
+    directive @isAuthenticated on FIELD_DEFINITION
+
+    type Query{
         _unused: Boolean
     }
 
     type Subscription {
-        counter: Int!
+        counter: Int! @isAuthenticated
     }
 """
 
@@ -26,5 +45,4 @@ def counter_resolver(count, info):
     return count + 1
 
 
-schema = make_executable_schema(type_def, subscription)
-# app = GraphQL(schema, debug=True)
+schema = make_executable_schema(type_def, subscription, directives={"isAuthenticated": IsAuthenticated})
